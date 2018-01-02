@@ -11,7 +11,7 @@ type Plan struct {
 	Ts, Ss []float64
 }
 
-func NewPlan(points []Point, a, vmax, cf float64) *Plan {
+func NewPlan(points []Point, velocities []float64, a, vmax, cf float64) *Plan {
 	const eps = 1e-9
 
 	// create segments for each consecutive pair of points
@@ -20,17 +20,27 @@ func NewPlan(points []Point, a, vmax, cf float64) *Plan {
 		segments = append(segments, newSegment(points[i-1], points[i]))
 	}
 
-	// compute a maxEntryVelocity for each segment based on the angle formed by
-	// the two segments
-	for i := 1; i < len(segments); i++ {
-		s1 := segments[i-1]
-		s2 := segments[i]
-		s2.maxEntryVelocity = cornerVelocity(s1, s2, vmax, a, cf)
-	}
-
-	// add a dummy segment at the end to force a final velocity of zero
+	// add a dummy segment at the end for setting final velocity
 	lastPoint := points[len(points)-1]
 	segments = append(segments, newSegment(lastPoint, lastPoint))
+
+	if len(velocities) == 0 {
+		// compute a maxEntryVelocity for each segment based on the angle
+		// formed by the two segments and the cornering factor (cf)
+		// the first and last segments will have maxEntryVelocity == 0
+		for i := 1; i < len(segments)-1; i++ {
+			s1 := segments[i-1]
+			s2 := segments[i]
+			s2.maxEntryVelocity = cornerVelocity(s1, s2, vmax, a, cf)
+		}
+	} else if len(velocities) == len(points) {
+		// set maxEntryVelocity based on input
+		for i, v := range velocities {
+			segments[i].maxEntryVelocity = math.Min(v, vmax)
+		}
+	} else {
+		panic("velocities array must be empty or same length as points array")
+	}
 
 	// loop over segments
 	i := 0

@@ -4,7 +4,7 @@ import "math"
 
 // cornerVelocity computes a maximum velocity at the corner of two segments
 // https://onehossshay.wordpress.com/2011/09/24/improving_grbl_cornering_algorithm/
-func cornerVelocity(s1, s2 *segment, vmax, a, delta float64) float64 {
+func cornerVelocity(s1, s2 *segment, vmax, a, cf float64) float64 {
 	const eps = 1e-9
 	cosine := -s1.vector.dot(s2.vector)
 	if math.Abs(cosine-1) < eps {
@@ -14,7 +14,7 @@ func cornerVelocity(s1, s2 *segment, vmax, a, delta float64) float64 {
 	if math.Abs(sine-1) < eps {
 		return vmax
 	}
-	v := math.Sqrt((a * delta * sine) / (1 - sine))
+	v := math.Sqrt((a * cf * sine) / (1 - sine))
 	return math.Min(v, vmax)
 }
 

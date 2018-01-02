@@ -11,7 +11,12 @@ func TestPlan(tt *testing.T) {
 	points = append(points, Point{100, 0})
 	points = append(points, Point{0, 0})
 
-	plan := NewPlan(points, 1, 10, 0.1)
+	var velocities []float64
+	velocities = append(velocities, 0)
+	velocities = append(velocities, 100)
+	velocities = append(velocities, 0)
+
+	plan := NewPlan(points, velocities, 1, 10, 0.1)
 
 	var t float64
 	for t < plan.T {
