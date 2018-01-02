@@ -115,3 +115,9 @@ func (p *Plan) Instant(t float64) Instant {
 	i := sort.Search(len(p.Ts), func(i int) bool { return p.Ts[i] > t }) - 1
 	return p.Blocks[i].Instant(t-p.Ts[i], p.Ts[i], p.Ss[i])
 }
+
+func (p *Plan) InstantAtDistance(s float64) Instant {
+	s = clamp(s, 0, p.S)
+	i := sort.Search(len(p.Ss), func(i int) bool { return p.Ss[i] > s }) - 1
+	return p.Blocks[i].InstantAtDistance(s-p.Ss[i], p.Ts[i], p.Ss[i])
+}

@@ -1,5 +1,7 @@
 package motion
 
+import "math"
+
 type Block struct {
 	A  float64
 	T  float64
@@ -22,4 +24,14 @@ func (b *Block) Instant(t, dt, ds float64) Instant {
 	s = clamp(s, 0, b.S)
 	p := b.P1.lerps(b.P2, s)
 	return Instant{t + dt, s + ds, v, a, p}
+}
+
+func (b *Block) InstantAtDistance(s, dt, ds float64) Instant {
+	s = clamp(s, 0, b.S)
+	if s == 0 {
+		return b.Instant(0, dt, ds)
+	}
+	vf := math.Sqrt(b.Vi*b.Vi + 2*b.A*s)
+	t := (2 * s) / (vf + b.Vi)
+	return b.Instant(t, dt, ds)
 }
