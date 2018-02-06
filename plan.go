@@ -11,7 +11,7 @@ type Plan struct {
 	Ts, Ss []float64
 }
 
-func NewPlan(points []Point, velocities []float64, a, vmax, cf float64) *Plan {
+func NewPlan(points []Point, vs, vmaxs []float64, a, vmax, cf float64) *Plan {
 	const eps = 1e-9
 
 	// create segments for each consecutive pair of points
@@ -24,22 +24,32 @@ func NewPlan(points []Point, velocities []float64, a, vmax, cf float64) *Plan {
 	lastPoint := points[len(points)-1]
 	segments = append(segments, newSegment(lastPoint, lastPoint))
 
-	if len(velocities) == 0 {
+	// optional per-segment vmax
+	if len(vmaxs) == 0 {
+		vmaxs = make([]float64, len(points))
+		for i := range vmaxs {
+			vmaxs[i] = vmax
+		}
+	} else if len(vmaxs) != len(points) {
+		panic("vmaxs array must be empty or same length as points array")
+	}
+
+	if len(vs) == 0 {
 		// compute a maxEntryVelocity for each segment based on the angle
 		// formed by the two segments and the cornering factor (cf)
 		// the first and last segments will have maxEntryVelocity == 0
 		for i := 1; i < len(segments)-1; i++ {
 			s1 := segments[i-1]
 			s2 := segments[i]
-			s2.maxEntryVelocity = cornerVelocity(s1, s2, vmax, a, cf)
+			s2.maxEntryVelocity = cornerVelocity(s1, s2, vmaxs[i], a, cf)
 		}
-	} else if len(velocities) == len(points) {
+	} else if len(vs) == len(points) {
 		// set maxEntryVelocity based on input
-		for i, v := range velocities {
-			segments[i].maxEntryVelocity = math.Min(v, vmax)
+		for i, v := range vs {
+			segments[i].maxEntryVelocity = math.Min(v, vmaxs[i])
 		}
 	} else {
-		panic("velocities array must be empty or same length as points array")
+		panic("vs array must be empty or same length as points array")
 	}
 
 	// loop over segments
@@ -50,7 +60,8 @@ func NewPlan(points []Point, velocities []float64, a, vmax, cf float64) *Plan {
 		nextSegment := segments[i+1]
 		s := segment.length
 		vi := segment.entryVelocity
-		vexit := nextSegment.maxEntryVelocity
+		vmax := vmaxs[i]
+		vexit := math.Min(vmax, nextSegment.maxEntryVelocity)
 		p1 := segment.p1
 		p2 := segment.p2
 		blocks := segment.blocks[:0]
