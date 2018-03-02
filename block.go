@@ -27,9 +27,11 @@ func (b *Block) Instant(t, dt, ds float64) Instant {
 }
 
 func (b *Block) InstantAtDistance(s, dt, ds float64) Instant {
-	s = clamp(s, 0, b.S)
-	if s == 0 {
+	if s <= 0 {
 		return b.Instant(0, dt, ds)
+	}
+	if s >= b.S {
+		return b.Instant(b.T, dt, ds)
 	}
 	vf := math.Sqrt(b.Vi*b.Vi + 2*b.A*s)
 	t := (2 * s) / (vf + b.Vi)
